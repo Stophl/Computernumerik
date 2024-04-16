@@ -44,17 +44,26 @@ def errorFinding(terms=1, x_0=0):
     check_abs_error = np.abs(np_sum - true_value)
     check_rel_error = check_abs_error / true_value
 
-    print('"True" Value:', true_value)
-    print("Forward Sum Value:", forward_sum)
-    print("Forward Absolute Error:", forward_abs_error)
-    print("Forward Relative Error:", forward_rel_error)
-    print("Backward Sum Value:", backward_sum)
-    print("Backward Absolute Error:", backward_abs_error)
-    print("Backward Relative Error:", backward_rel_error)
-    print("CheckSum Absolute Error:", check_abs_error)
-    print("CheckSum Relative Error:", check_rel_error)
+    print('"True" Value:', f"{true_value:.3}")
+    print("Forward Sum Value:", f"{forward_sum:.3}")
+    print("Forward Absolute Error:", f"{forward_abs_error:.3}")
+    print("Forward Relative Error:", f"{forward_rel_error:.3}")
+    print("Backward Sum Value:", f"{backward_sum:.3}")
+    print("Backward Absolute Error:", f"{backward_abs_error:.3}")
+    print("Backward Relative Error:", f"{backward_rel_error:.3}")
+    print("CheckSum Absolute Error:", f"{check_abs_error:.3}")
+    print("CheckSum Relative Error:", f"{check_rel_error:.3}")
 
-errorFinding(10, 20)
+term_list = [10, 50]
+x0_list = [1, 10, 20, -10, -20]
+#errorFinding(10, 20)
+
+for A in x0_list:
+    for B in term_list:
+        print("***** x0 = ",A,", n = ",B," *****")
+        errorFinding(B, A)
+        print("***** ***** ***** ***** *****")
+        print("")
 
 
 
