@@ -1,5 +1,6 @@
 
 import numpy as np
+import csv
 
 
 def taylorExponential(terms=1, x_0=0):
@@ -31,7 +32,7 @@ def taylorExponential(terms=1, x_0=0):
 
     return summands, check_sum, forward, backward
 
-def errorFinding(terms=1, x_0=0):
+def allErrors(terms=1, x_0=0, output=False):
     summands, np_sum, forward_sum, backward_sum = taylorExponential(terms=terms, x_0=x_0)
     true_value = np.exp(x_0)
 
@@ -44,17 +45,74 @@ def errorFinding(terms=1, x_0=0):
     check_abs_error = np.abs(np_sum - true_value)
     check_rel_error = check_abs_error / true_value
 
-    print('"True" Value:', true_value)
-    print("Forward Sum Value:", forward_sum)
-    print("Forward Absolute Error:", forward_abs_error)
-    print("Forward Relative Error:", forward_rel_error)
-    print("Backward Sum Value:", backward_sum)
-    print("Backward Absolute Error:", backward_abs_error)
-    print("Backward Relative Error:", backward_rel_error)
-    print("CheckSum Absolute Error:", check_abs_error)
-    print("CheckSum Relative Error:", check_rel_error)
+    if output:
+        print('"True" Value:', true_value)
+        print("Forward Sum Value:", forward_sum)
+        print("Forward Absolute Error:", forward_abs_error)
+        print("Forward Relative Error:", forward_rel_error)
+        print("Backward Sum Value:", backward_sum)
+        print("Backward Absolute Error:", backward_abs_error)
+        print("Backward Relative Error:", backward_rel_error)
+        print("CheckSum Absolute Error:", check_abs_error)
+        print("CheckSum Relative Error:", check_rel_error)
 
-errorFinding(10, 20)
+    return true_value, forward_sum, forward_abs_error, forward_rel_error, backward_sum, backward_abs_error, backward_rel_error, check_abs_error, check_rel_error
+
+def txt_write_error(term_values=[1], x_0_values=[0]):
+    txt_file_path = 'error_analysis_table.txt'
+
+    with open(txt_file_path, 'w') as txtfile:
+        txtfile.write(
+            "{:<8} {:<8} {:<15} {:<15} {:<15} {:<15} {:<15} {:<15} {:<15} {:<15}\n".format("terms", "x_0", "True Value",
+                                                                                           "Forward Sum",
+                                                                                           "Forward Abs Err",
+                                                                                           "Forward Rel Err",
+                                                                                           "Backward Sum",
+                                                                                           "Backward Abs Err",
+                                                                                           "Backward Rel Err",
+                                                                                           "CheckSum Abs Err"))
+
+        for x_0 in x_0_values:
+            for terms in term_values:
+                true_value, forward_sum, forward_abs_error, forward_rel_error, backward_sum, backward_abs_error, backward_rel_error, check_abs_error, check_rel_error = allErrors(
+                    terms=terms, x_0=x_0)
+
+                txtfile.write(
+                    "{:<8} {:<8} {:<15.10e} {:<15.10e} {:<15.10e} {:<15.10e} {:<15.10e} {:<15.10e} {:<15.10e} {:<15.10e}\n".format(
+                        terms, x_0, true_value, forward_sum, forward_abs_error, forward_rel_error, backward_sum,
+                        backward_abs_error, backward_rel_error, check_abs_error))
+
+    print("Data has been written to", txt_file_path)
+
+def csv_write_error(term_values=[1], x_0_values=[0]):
+    csv_file_path = 'error_analysis_table.csv'
+
+    with open(csv_file_path, 'w', newline='') as csvfile:
+        writer = csv.writer(csvfile, delimiter=';')
+
+        writer.writerow(
+            ["terms", "x_0", "True Value", "Forward Sum", "Forward Abs Err", "Forward Rel Err", "Backward Sum",
+             "Backward Abs Err", "Backward Rel Err"])
+
+        for x_0 in x_0_values:
+            for terms in term_values:
+                true_value, forward_sum, forward_abs_error, forward_rel_error, backward_sum, backward_abs_error, backward_rel_error, check_abs_error, check_rel_error = allErrors(
+                    terms=terms, x_0=x_0)
+
+                writer.writerow(
+                    [terms, x_0, true_value, forward_sum, forward_abs_error, forward_rel_error, backward_sum,
+                     backward_abs_error, backward_rel_error])
+
+    print("Data has been written to", csv_file_path)
+
+def main():
+    txt_write_error(term_values=[10, 50], x_0_values=[1,10])
+    csv_write_error(term_values=[10, 50], x_0_values=[1,10])
+
+
+if __name__ == "__main__":
+    main()
+
 
 
 
