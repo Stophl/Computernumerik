@@ -130,9 +130,9 @@ def taylorExponential_back(terms=1, x_0=0):
 
     return backward
 
-def plotting_delta(x_values):
+def plotting_delta(x_values, function, *args):
     def delta(x):
-        return (taylorExponential_back(10, x) - np.exp(x)) / np.exp(x)
+        return (function(*args, x) - np.exp(x)) / np.exp(x)
 
     y_values = []
     for item in x_values:
@@ -146,14 +146,35 @@ def plotting_delta(x_values):
     plt.grid(True)
     plt.show()
 
+def taylor_exp(x):
+    ln2 = np.log(2)
+    if np.abs(x) > ln2:
+        invert = False
+        if x < 0:
+            invert = True
+        x = np.abs(x)
+
+        u = int(x / ln2)
+        r = x - u * ln2
+        result = (np.power(2, u) * taylorExponential_back(terms=10, x_0=r))
+        if invert:
+            result = 1/result
+    else:
+        result = taylorExponential_back(terms=10, x_0=x)
+    return result
+
 def main():
     error = False
     if error:
         txt_write_error(term_values=[10, 50], x_0_values=[1, 10, 20, -10, -20])
         csv_write_error(term_values=[10, 50], x_0_values=[1, 10, 20, -10, -20])
 
-    x_values = np.linspace(0, np.log(2), 100)
-    plotting_delta(x_values)
+    plot = True
+    if plot:
+        x_values = np.linspace(0, np.log(2), 100)
+        plotting_delta(x_values, taylorExponential_back, 10)
+
+
 
 
 if __name__ == "__main__":
