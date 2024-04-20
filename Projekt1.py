@@ -1,6 +1,7 @@
 
 import numpy as np
 import csv
+import matplotlib.pyplot as plt
 
 
 def taylorExponential_allsums(terms=1, x_0=0):
@@ -129,11 +130,30 @@ def taylorExponential_back(terms=1, x_0=0):
 
     return backward
 
+def plotting_delta(x_values):
+    def delta(x):
+        return (taylorExponential_back(10, x) - np.exp(x)) / np.exp(x)
+
+    y_values = []
+    for item in x_values:
+        y_values.append(delta(item))
+
+    # Plot the function
+    plt.plot(x_values, y_values)
+    plt.xlabel('x')
+    plt.ylabel('δ(x)')
+    plt.title("Plot of δ(x)")
+    plt.grid(True)
+    plt.show()
+
 def main():
-    error = True
+    error = False
     if error:
         txt_write_error(term_values=[10, 50], x_0_values=[1, 10, 20, -10, -20])
         csv_write_error(term_values=[10, 50], x_0_values=[1, 10, 20, -10, -20])
+
+    x_values = np.linspace(0, np.log(2), 100)
+    plotting_delta(x_values)
 
 
 if __name__ == "__main__":
