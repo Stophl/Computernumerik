@@ -3,7 +3,7 @@ import numpy as np
 import csv
 
 
-def taylorExponential(terms=1, x_0=0):
+def taylorExponential_allsums(terms=1, x_0=0):
     invert = False
     if x_0 < 0:
         invert = True
@@ -33,7 +33,7 @@ def taylorExponential(terms=1, x_0=0):
     return summands, check_sum, forward, backward
 
 def allErrors(terms=1, x_0=0, output=False):
-    summands, np_sum, forward_sum, backward_sum = taylorExponential(terms=terms, x_0=x_0)
+    summands, np_sum, forward_sum, backward_sum = taylorExponential_allsums(terms=terms, x_0=x_0)
     true_value = np.exp(x_0)
 
     forward_abs_error = np.abs(forward_sum - true_value)
@@ -105,9 +105,35 @@ def csv_write_error(term_values=[1], x_0_values=[0]):
 
     print("Data has been written to", csv_file_path)
 
+def taylorExponential_back(terms=1, x_0=0):
+    invert = False
+    if x_0 < 0:
+        invert = True
+    x_0 = np.abs(x_0)
+    summands = [1, x_0]
+
+    for n in range(terms+1):
+        if n < 2:
+            continue
+        factor = x_0/n
+        summands.append(summands[-1]*factor)
+
+    backward = 0
+    for n in range(len(summands)):
+        reverse = len(summands) - 1 - n
+        backward = backward + summands[reverse]
+
+
+    if invert:
+        backward = 1 / backward
+
+    return backward
+
 def main():
-    txt_write_error(term_values=[10, 50], x_0_values=[1,10])
-    csv_write_error(term_values=[10, 50], x_0_values=[1,10])
+    error = True
+    if error:
+        txt_write_error(term_values=[10, 50], x_0_values=[1, 10, 20, -10, -20])
+        csv_write_error(term_values=[10, 50], x_0_values=[1, 10, 20, -10, -20])
 
 
 if __name__ == "__main__":
