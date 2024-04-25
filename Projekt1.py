@@ -33,9 +33,13 @@ def taylorExponential_allsums(terms=1, x_0=0.0):
 
     return summands, check_sum, forward, backward
 
-def allErrors(terms=1, x_0=0.0, output=False):
+def allErrors(terms=1, x_0=0.0, output=False, long=False):
     summands, np_sum, forward_sum, backward_sum = taylorExponential_allsums(terms=terms, x_0=x_0)
-    true_value = np.exp(np.longdouble(x_0))
+    if long:
+        true_value = np.exp(np.longdouble(x_0))
+    else:
+        true_value = np.exp(x_0)
+
     taylor_value = taylor_exp(x_0)
 
     taylor_value_abs_error = np.abs(forward_sum - true_value)
@@ -64,42 +68,14 @@ def allErrors(terms=1, x_0=0.0, output=False):
         print("CheckSum Absolute Error:", f"{check_abs_error:.3E}")
         print("CheckSum Relative Error:", f"{check_rel_error:.3E}")
 
-    return true_value, taylor_value, taylor_value_abs_error, taylor_value_rel_error, forward_sum, forward_abs_error, forward_rel_error, backward_sum, backward_abs_error, backward_rel_error, check_abs_error, check_rel_error
+    return (true_value,
+            taylor_value, taylor_value_abs_error, taylor_value_rel_error,
+            forward_sum, forward_abs_error, forward_rel_error,
+            backward_sum, backward_abs_error, backward_rel_error,
+            check_abs_error, check_rel_error)
 
-def allErrors_longdouble(terms=1, x_0=0.0, output=False):
-    summands, np_sum, forward_sum, backward_sum = taylorExponential_allsums(terms=terms, x_0=x_0)
-    true_value = np.exp(np.longdouble(x_0))
-    taylor_value = taylor_exp(x_0)
 
-    taylor_value_abs_error = np.abs(true_value - forward_sum)
-    taylor_value_rel_error = taylor_value_abs_error / true_value
-
-    forward_abs_error = np.abs(true_value - forward_sum)
-    forward_rel_error = forward_abs_error / true_value
-
-    backward_abs_error = np.abs(true_value - backward_sum)
-    backward_rel_error = backward_abs_error / true_value
-
-    check_abs_error = np.abs(true_value - np_sum)
-    check_rel_error = check_abs_error / true_value
-
-    if output:
-        print('"True" Value:', f"{true_value:.3E}")
-        print("Taylor Value:", f"{taylor_value:.3E}")
-        print("Taylor Absolute Error:", f"{taylor_value_abs_error:.3E}")
-        print("Taylor Relative Error:", f"{taylor_value_rel_error:.3E}")
-        print("Forward Sum Value:", f"{forward_sum:.3E}")
-        print("Forward Absolute Error:", f"{forward_abs_error:.3E}")
-        print("Forward Relative Error:", f"{forward_rel_error:.3E}")
-        print("Backward Sum Value:", f"{backward_sum:.3E}")
-        print("Backward Absolute Error:", f"{backward_abs_error:.3E}")
-        print("Backward Relative Error:", f"{backward_rel_error:.3E}")
-        print("CheckSum Absolute Error:", f"{check_abs_error:.3E}")
-        print("CheckSum Relative Error:", f"{check_rel_error:.3E}")
-
-    return true_value, taylor_value, taylor_value_abs_error, taylor_value_rel_error, forward_sum, forward_abs_error, forward_rel_error, backward_sum, backward_abs_error, backward_rel_error, check_abs_error, check_rel_error
-
-def txt_write_error(term_values=None, x_0_values=None):
+def txt_write_error(term_values=None, x_0_values=None, long=False):
     if term_values is None:
         term_values = [1]
     if x_0_values is None:
@@ -123,8 +99,8 @@ def txt_write_error(term_values=None, x_0_values=None):
 
         for x_0 in x_0_values:
             for terms in term_values:
-                true_value, taylor_value, taylor_value_abs_error, taylor_value_rel_error, forward_sum, forward_abs_error, forward_rel_error, backward_sum, backward_abs_error, backward_rel_error, check_abs_error, check_rel_error = allErrors_longdouble(
-                    terms=terms, x_0=x_0)
+                true_value, taylor_value, taylor_value_abs_error, taylor_value_rel_error, forward_sum, forward_abs_error, forward_rel_error, backward_sum, backward_abs_error, backward_rel_error, check_abs_error, check_rel_error = allErrors(
+                    terms=terms, x_0=x_0, long=long)
 
                 txtfile.write(
                     "{:<8} {:<8} {:<15.3e} {:<15.3e} {:<15.3e} {:<15.3e} {:<15.3e} {:<15.3e} {:<15.3e} {:<15.3e} {:<15.3e} {:<15.3e} {:<15.3e} {:<15.3e}\n".format(
@@ -133,30 +109,31 @@ def txt_write_error(term_values=None, x_0_values=None):
 
     print("Data has been written to", txt_file_path)
 
-def csv_write_error(term_values=None, x_0_values=None):
+'''def csv_write_error(term_values=None, x_0_values=None):
     if term_values is None:
         term_values = [1]
     if x_0_values is None:
         x_0_values = [0]
     csv_file_path = 'error_analysis_table.csv'
 
-    with open(csv_file_path, 'w', newline='') as csvfile:
+    with (((open(csv_file_path, 'w', newline='') as csvfile))):
         writer = csv.writer(csvfile, delimiter=';')
 
         writer.writerow(
-            ["terms", "x_0", "True Value", "Taylor(x)", "Taylor Abs Err", "Taylor Rel Err", "Forward Sum", "Forward Abs Err", "Forward Rel Err", "Backward Sum",
+            ["terms", "x_0", "True Value", "Taylor(x)", "Taylor Abs Err", "Taylor Rel Err",
+             "Forward Sum", "Forward Abs Err", "Forward Rel Err", "Backward Sum",
              "Backward Abs Err", "Backward Rel Err"])
 
         for x_0 in x_0_values:
             for terms in term_values:
-                true_value, taylor_value, taylor_value_abs_error, taylor_value_rel_error, forward_sum, forward_abs_error, forward_rel_error, backward_sum, backward_abs_error, backward_rel_error, check_abs_error, check_rel_error = allErrors(
+                true_value, taylor_value, taylor_value_abs_error,taylor_value_rel_error, forward_sum, forward_abs_error, forward_rel_error, backward_sum, backward_abs_error, backward_rel_error, check_abs_error, check_rel_error = allErrors(
                     terms=terms, x_0=x_0)
 
                 writer.writerow(
                     [terms, x_0, true_value, taylor_value, taylor_value_abs_error, taylor_value_rel_error, forward_sum, forward_abs_error, forward_rel_error, backward_sum,
                      backward_abs_error, backward_rel_error])
 
-    print("Data has been written to", csv_file_path)
+    print("Data has been written to", csv_file_path)'''
 
 def taylor_exp(x):
     ln2 = np.log(2.0)
@@ -199,9 +176,9 @@ def taylorExponential_back(terms=1, x_0=0.0):
 
     return backward
 
-def plotting_delta(x_values, function, *args):
+def plotting_delta(x_values, function, *args, logscale=False):
     def delta_long(x):
-        return np.abs((np.exp(np.longdouble(x))-function(*args, x)) / np.exp(x))
+        return np.abs((np.exp(np.longdouble(x))-function(*args, x)) / np.exp(np.longdouble(x)))
     def delta(x):
         return np.abs((np.exp(x)-function(*args, x)) / np.exp(x))
 
@@ -214,6 +191,8 @@ def plotting_delta(x_values, function, *args):
     # Plot the function
     plt.plot(x_values, y_values)
     plt.plot(x_values, y_values_long)
+    if logscale:
+        plt.yscale('log')
     plt.xlabel('x')
     plt.ylabel('δ(x)')
     plt.title("Plot of δ(x)")
@@ -230,14 +209,14 @@ def plotting_delta(x_values, function, *args):
 def main():
     error = True
     if error:
-        txt_write_error(term_values=[10, 50], x_0_values=[1.0, 10.0, 20.0, -10.0, -20.0])
+        txt_write_error(term_values=[10, 50], x_0_values=[1.0, 10.0, 20.0, -10.0, -20.0], long=False)
         #csv_write_error(term_values=[10, 50], x_0_values=[1.0, 10.0, 20.0, -10.0, -20.0])
 
     plot = True
     if plot:
-        x_values = np.linspace(0, 1, 10000)
-        plotting_delta(x_values, taylorExponential_back, 10)
-        plotting_delta(x_values, taylor_exp)
+        x_values = np.linspace(0, 0.5, 1000)
+        plotting_delta(x_values, taylorExponential_back, 10, logscale=True)
+        plotting_delta(x_values, taylor_exp, logscale=False)
 
 
 
