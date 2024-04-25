@@ -35,7 +35,7 @@ def taylorExponential_allsums(terms=1, x_0=0.0):
 
 def allErrors(terms=1, x_0=0.0, output=False):
     summands, np_sum, forward_sum, backward_sum = taylorExponential_allsums(terms=terms, x_0=x_0)
-    true_value = np.exp(x_0)
+    true_value = np.exp(np.longdouble(x_0))
     taylor_value = taylor_exp(x_0)
 
     taylor_value_abs_error = np.abs(forward_sum - true_value)
@@ -48,6 +48,39 @@ def allErrors(terms=1, x_0=0.0, output=False):
     backward_rel_error = backward_abs_error / true_value
 
     check_abs_error = np.abs(np_sum - true_value)
+    check_rel_error = check_abs_error / true_value
+
+    if output:
+        print('"True" Value:', f"{true_value:.3E}")
+        print("Taylor Value:", f"{taylor_value:.3E}")
+        print("Taylor Absolute Error:", f"{taylor_value_abs_error:.3E}")
+        print("Taylor Relative Error:", f"{taylor_value_rel_error:.3E}")
+        print("Forward Sum Value:", f"{forward_sum:.3E}")
+        print("Forward Absolute Error:", f"{forward_abs_error:.3E}")
+        print("Forward Relative Error:", f"{forward_rel_error:.3E}")
+        print("Backward Sum Value:", f"{backward_sum:.3E}")
+        print("Backward Absolute Error:", f"{backward_abs_error:.3E}")
+        print("Backward Relative Error:", f"{backward_rel_error:.3E}")
+        print("CheckSum Absolute Error:", f"{check_abs_error:.3E}")
+        print("CheckSum Relative Error:", f"{check_rel_error:.3E}")
+
+    return true_value, taylor_value, taylor_value_abs_error, taylor_value_rel_error, forward_sum, forward_abs_error, forward_rel_error, backward_sum, backward_abs_error, backward_rel_error, check_abs_error, check_rel_error
+
+def allErrors_longdouble(terms=1, x_0=0.0, output=False):
+    summands, np_sum, forward_sum, backward_sum = taylorExponential_allsums(terms=terms, x_0=x_0)
+    true_value = np.exp(np.longdouble(x_0))
+    taylor_value = taylor_exp(x_0)
+
+    taylor_value_abs_error = np.abs(true_value - forward_sum)
+    taylor_value_rel_error = taylor_value_abs_error / true_value
+
+    forward_abs_error = np.abs(true_value - forward_sum)
+    forward_rel_error = forward_abs_error / true_value
+
+    backward_abs_error = np.abs(true_value - backward_sum)
+    backward_rel_error = backward_abs_error / true_value
+
+    check_abs_error = np.abs(true_value - np_sum)
     check_rel_error = check_abs_error / true_value
 
     if output:
@@ -90,7 +123,7 @@ def txt_write_error(term_values=None, x_0_values=None):
 
         for x_0 in x_0_values:
             for terms in term_values:
-                true_value, taylor_value, taylor_value_abs_error, taylor_value_rel_error, forward_sum, forward_abs_error, forward_rel_error, backward_sum, backward_abs_error, backward_rel_error, check_abs_error, check_rel_error = allErrors(
+                true_value, taylor_value, taylor_value_abs_error, taylor_value_rel_error, forward_sum, forward_abs_error, forward_rel_error, backward_sum, backward_abs_error, backward_rel_error, check_abs_error, check_rel_error = allErrors_longdouble(
                     terms=terms, x_0=x_0)
 
                 txtfile.write(
@@ -167,15 +200,20 @@ def taylorExponential_back(terms=1, x_0=0.0):
     return backward
 
 def plotting_delta(x_values, function, *args):
+    def delta_long(x):
+        return np.abs((np.exp(np.longdouble(x))-function(*args, x)) / np.exp(x))
     def delta(x):
-        return (function(*args, x) - np.exp(x)) / np.exp(x)
+        return np.abs((np.exp(x)-function(*args, x)) / np.exp(x))
 
-    y_values = []
+    y_values_long = []
+    y_values=[]
     for item in x_values:
+        y_values_long.append(delta_long(item))
         y_values.append(delta(item))
 
     # Plot the function
     plt.plot(x_values, y_values)
+    plt.plot(x_values, y_values_long)
     plt.xlabel('x')
     plt.ylabel('δ(x)')
     plt.title("Plot of δ(x)")
@@ -190,14 +228,14 @@ def plotting_delta(x_values, function, *args):
     plt.show()
 
 def main():
-    error = False
+    error = True
     if error:
         txt_write_error(term_values=[10, 50], x_0_values=[1.0, 10.0, 20.0, -10.0, -20.0])
-        csv_write_error(term_values=[10, 50], x_0_values=[1.0, 10.0, 20.0, -10.0, -20.0])
+        #csv_write_error(term_values=[10, 50], x_0_values=[1.0, 10.0, 20.0, -10.0, -20.0])
 
     plot = True
     if plot:
-        x_values = np.linspace(0, 10, 10000)
+        x_values = np.linspace(0, 1, 10000)
         plotting_delta(x_values, taylorExponential_back, 10)
         plotting_delta(x_values, taylor_exp)
 
