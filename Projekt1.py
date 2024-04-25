@@ -42,7 +42,7 @@ def allErrors(terms=1, x_0=0.0, output=False, long=False):
 
     taylor_value = taylor_exp(x_0)
 
-    taylor_value_abs_error = np.abs(forward_sum - true_value)
+    taylor_value_abs_error = np.abs(taylor_value - true_value)
     taylor_value_rel_error = taylor_value_abs_error / true_value
 
     forward_abs_error = np.abs(forward_sum - true_value)
@@ -176,7 +176,7 @@ def taylorExponential_back(terms=1, x_0=0.0):
 
     return backward
 
-def plotting_delta(x_values, function, *args, logscale=False):
+def plotting_delta(x_values, function, *args, logscale=False, helping_line = True):
     def delta_long(x):
         return np.abs((np.exp(np.longdouble(x))-function(*args, x)) / np.exp(np.longdouble(x)))
     def delta(x):
@@ -198,7 +198,6 @@ def plotting_delta(x_values, function, *args, logscale=False):
     plt.title("Plot of δ(x)")
     plt.grid(True)
 
-    helping_line = True
     if helping_line:
         multiples_of_log2 = np.arange(np.ceil(min(x_values) / np.log(2)), np.floor(max(x_values) / np.log(2)) + 1)
         for multiple in multiples_of_log2:
@@ -214,8 +213,8 @@ def main():
 
     plot = True
     if plot:
-        x_values = np.linspace(0, 0.5, 1000)
-        plotting_delta(x_values, taylorExponential_back, 10, logscale=True)
+        x_values = np.linspace(-20, 0, 100)
+        plotting_delta(x_values, taylorExponential_back, 10, logscale=False)
         plotting_delta(x_values, taylor_exp, logscale=False)
 
 
