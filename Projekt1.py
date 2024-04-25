@@ -4,7 +4,7 @@ import csv
 import matplotlib.pyplot as plt
 
 
-def taylorExponential_allsums(terms=1, x_0=0):
+def taylorExponential_allsums(terms=1, x_0=0.0):
     invert = False
     if x_0 < 0:
         invert = True
@@ -33,7 +33,7 @@ def taylorExponential_allsums(terms=1, x_0=0):
 
     return summands, check_sum, forward, backward
 
-def allErrors(terms=1, x_0=0, output=False):
+def allErrors(terms=1, x_0=0.0, output=False):
     summands, np_sum, forward_sum, backward_sum = taylorExponential_allsums(terms=terms, x_0=x_0)
     true_value = np.exp(x_0)
 
@@ -59,7 +59,7 @@ def allErrors(terms=1, x_0=0, output=False):
 
     return true_value, forward_sum, forward_abs_error, forward_rel_error, backward_sum, backward_abs_error, backward_rel_error, check_abs_error, check_rel_error
 
-def txt_write_error(term_values=[1], x_0_values=[0]):
+def txt_write_error(term_values=[1], x_0_values=[0.0]):
     txt_file_path = 'error_analysis_table.txt'
 
     with open(txt_file_path, 'w') as txtfile:
@@ -85,7 +85,7 @@ def txt_write_error(term_values=[1], x_0_values=[0]):
 
     print("Data has been written to", txt_file_path)
 
-def csv_write_error(term_values=[1], x_0_values=[0]):
+def csv_write_error(term_values=[1], x_0_values=[0.0]):
     csv_file_path = 'error_analysis_table.csv'
 
     with open(csv_file_path, 'w', newline='') as csvfile:
@@ -106,7 +106,7 @@ def csv_write_error(term_values=[1], x_0_values=[0]):
 
     print("Data has been written to", csv_file_path)
 
-def taylorExponential_back(terms=1, x_0=0):
+def taylorExponential_back(terms=1, x_0=0.0):
     invert = False
     if x_0 < 0:
         invert = True
@@ -144,21 +144,28 @@ def plotting_delta(x_values, function, *args):
     plt.ylabel('δ(x)')
     plt.title("Plot of δ(x)")
     plt.grid(True)
+
+    helping_line = True
+    if helping_line:
+        multiples_of_log2 = np.arange(np.ceil(min(x_values) / np.log(2)), np.floor(max(x_values) / np.log(2)) + 1)
+        for multiple in multiples_of_log2:
+            plt.axvline(x=multiple * np.log(2), color='orange', linestyle='--', alpha=0.5)
+
     plt.show()
 
 def taylor_exp(x):
-    ln2 = np.log(2)
+    ln2 = np.log(2.0)
     if np.abs(x) > ln2:
         invert = False
-        if x < 0:
+        if x < 0.0:
             invert = True
         x = np.abs(x)
 
         u = int(x / ln2)
         r = x - u * ln2
-        result = (np.power(2, u) * taylorExponential_back(terms=10, x_0=r))
+        result = (np.power(2.0, u) * taylorExponential_back(terms=10, x_0=r))
         if invert:
-            result = 1/result
+            result = 1.0/result
     else:
         result = taylorExponential_back(terms=10, x_0=x)
     return result
@@ -166,13 +173,14 @@ def taylor_exp(x):
 def main():
     error = False
     if error:
-        txt_write_error(term_values=[10, 50], x_0_values=[1, 10, 20, -10, -20])
-        csv_write_error(term_values=[10, 50], x_0_values=[1, 10, 20, -10, -20])
+        txt_write_error(term_values=[10, 50], x_0_values=[1.0, 10.0, 20.0, -10.0, -20.0])
+        csv_write_error(term_values=[10, 50], x_0_values=[1.0, 10.0, 20.0, -10.0, -20.0])
 
     plot = True
     if plot:
-        x_values = np.linspace(0, np.log(2), 100)
+        x_values = np.linspace(0, 10, 10000)
         plotting_delta(x_values, taylorExponential_back, 10)
+        plotting_delta(x_values, taylor_exp)
 
 
 
