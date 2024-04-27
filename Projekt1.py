@@ -163,7 +163,7 @@ def txt_write_error(term_values=None, x_0_values=None, long=False, name="error_a
 
 
 def plotting_delta(x_values, function, *args, title="Plot of δ(x) - default", \
-                   logscale=False, helping_line=True, long=False):
+                   logscale=False, helping_line=True, long=False, fontsize=15):
     def delta_long(x):
         return np.abs((np.exp(np.longdouble(x)) - function(*args, x)) / np.exp(np.longdouble(x)))
 
@@ -171,7 +171,6 @@ def plotting_delta(x_values, function, *args, title="Plot of δ(x) - default", \
         return np.abs(np.exp(x) - function(*args, x)) / np.exp(x)
 
     save = title.split("-", 1)[1].strip()
-
 
     y_values = []
     for item in x_values:
@@ -183,30 +182,33 @@ def plotting_delta(x_values, function, *args, title="Plot of δ(x) - default", \
         for item in x_values:
             y_values_long.append(delta_long(item))
         plt.plot(x_values, y_values_long, label='Extended Precision')
-        save = save +"_long"
+        save = save + "_long"
 
     if logscale:
         plt.yscale('log')
         save = save + "_log"
 
-    plt.xlabel('x')
-    plt.ylabel('δ(x)')
-    plt.title(title)
+    plt.xlabel('x', fontsize=fontsize)
+    plt.ylabel('δ(x)', fontsize=fontsize)
+    plt.title(title, fontsize=fontsize)
     plt.grid(True)
 
     lower = min(x_values)
     upper = max(x_values)
     save = save + f"_{round(lower, 2)}_{round(upper, 2)}"
     if helping_line:
-
         multiples_of_log2 = np.arange(np.ceil(lower / np.log(2)), np.floor(upper / np.log(2)) + 1)
         for multiple in multiples_of_log2:
             plt.axvline(x=multiple * np.log(2), color='purple', linestyle='--', alpha=0.5)
         plt.plot([], [], color='purple', linestyle='--', label="Multiples of ln(2)")
         save = save + "_helping"
 
-    plt.legend()
+    plt.legend(fontsize=fontsize-5)
+    plt.xticks(fontsize=fontsize)
+    plt.yticks(fontsize=fontsize)
+    plt.gca().yaxis.get_offset_text().set_fontsize(fontsize - 3)
 
+    plt.tight_layout()
     plt.savefig(f"{save}.pdf", format="pdf", dpi=300)
     plt.show()
 
