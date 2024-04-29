@@ -2,11 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 
-def summands_for_exp(terms=1, x_0=0.0):
-    invert = False
-    if x_0 < 0:
-        invert = True
-    x_0 = np.abs(x_0)
+def sums_for_exp(terms=1, x_0=0.0):
     summands = [1, x_0]
 
     for n in range(terms + 1):
@@ -14,13 +10,6 @@ def summands_for_exp(terms=1, x_0=0.0):
             continue
         factor = x_0 / n
         summands.append(summands[-1] * factor)
-    summands = np.array(summands)
-
-    return invert, summands
-
-
-def taylorExponential_allsums(terms=1, x_0=0.0):
-    invert, summands = summands_for_exp(terms=terms, x_0=x_0)
 
     forward = 0
     backward = 0
@@ -28,56 +17,37 @@ def taylorExponential_allsums(terms=1, x_0=0.0):
         forward = forward + summands[n]
         reverse = len(summands) - 1 - n
         backward = backward + summands[reverse]
-    check_sum = np.sum(summands)
 
-    if invert:
-        forward = 1 / forward
-        backward = 1 / backward
-        check_sum = 1 / check_sum
-
-    return check_sum, forward, backward
+    return forward, backward
 
 
-def taylorExponential_back(terms=1, x_0=0.0):
-    invert, summands = summands_for_exp(terms=terms, x_0=x_0)
-
-    backward = 0
-    for n in range(len(summands)):
-        reverse = len(summands) - 1 - n
-        backward = backward + summands[reverse]
-
-    if invert:
-        backward = 1.0 / backward
-
-    return backward
-
-
-def taylor_exp(x):
+def taylor_exp(terms=10, x_0=0.0):
     ln2 = np.log(2.0)
-    if np.abs(x) > ln2:
-        invert = False
-        if x < 0:
-            invert = True
-        x = np.abs(x)
 
+    invert = False
+    if x_0 < 0:
+        invert = True
+    x = np.abs(x_0)
+
+    if np.abs(x) > ln2:
         u = int(x / ln2)
         r = x - u * ln2
-        result = (np.power(2.0, u) * taylorExponential_back(terms=10, x_0=r))
-        if invert:
-            result = 1.0 / result
+        result = (np.power(2.0, u) * sums_for_exp(terms=terms, x_0=r)[1])
     else:
-        result = taylorExponential_back(terms=10, x_0=x)
+        result = sums_for_exp(terms=terms, x_0=x)[1]
+
+    if invert:
+        result = 1.0 / result
+
     return result
 
 
-def allErrors(terms=1, x_0=0.0, output=False, long=False):
-    np_sum, forward_sum, backward_sum = taylorExponential_allsums(terms=terms, x_0=x_0)
-    if long:
-        true_value = np.exp(np.longdouble(x_0))
-    else:
-        true_value = np.exp(x_0)
+def allErrors(terms=1, x_0=0.0, output=False):
+    forward_sum, backward_sum = sums_for_exp(terms=terms, x_0=x_0)
 
-    taylor_value = taylor_exp(x_0)
+    true_value = np.exp(np.longdouble(x_0))
+
+    taylor_value = taylor_exp(terms=terms, x_0=x_0)
 
     taylor_value_abs_error = np.abs(taylor_value - true_value)
     taylor_value_rel_error = taylor_value_abs_error / true_value
@@ -87,9 +57,6 @@ def allErrors(terms=1, x_0=0.0, output=False, long=False):
 
     backward_abs_error = np.abs(backward_sum - true_value)
     backward_rel_error = backward_abs_error / true_value
-
-    check_abs_error = np.abs(np_sum - true_value)
-    check_rel_error = check_abs_error / true_value
 
     if output:
         print('"True" Value:', f"{true_value:.3E}")
@@ -102,15 +69,11 @@ def allErrors(terms=1, x_0=0.0, output=False, long=False):
         print("Backward Sum Value:", f"{backward_sum:.3E}")
         print("Backward Absolute Error:", f"{backward_abs_error:.3E}")
         print("Backward Relative Error:", f"{backward_rel_error:.3E}")
-        print("CheckSum Value:", f"{np_sum:.3E}")
-        print("CheckSum Absolute Error:", f"{check_abs_error:.3E}")
-        print("CheckSum Relative Error:", f"{check_rel_error:.3E}")
 
     return (true_value,
             taylor_value, taylor_value_abs_error, taylor_value_rel_error,
             forward_sum, forward_abs_error, forward_rel_error,
-            backward_sum, backward_abs_error, backward_rel_error, np_sum,
-            check_abs_error, check_rel_error)
+            backward_sum, backward_abs_error, backward_rel_error)
 
 
 def txt_write_error(term_values=None, x_0_values=None, long=False, name="error_analysis_table.txt"):
@@ -127,14 +90,12 @@ def txt_write_error(term_values=None, x_0_values=None, long=False, name="error_a
             for terms in term_values:
                 true_value, taylor_value, taylor_value_abs_error, taylor_value_rel_error, \
                     forward_sum, forward_abs_error, forward_rel_error, \
-                    backward_sum, backward_abs_error, backward_rel_error, \
-                    check_sum, check_abs_error, check_rel_error = allErrors(terms=terms, x_0=x_0, long=long)
+                    backward_sum, backward_abs_error, backward_rel_error = allErrors(terms=terms, x_0=x_0, long=long)
                 if first_term:
                     txtfile.write(f"True Value = {true_value:.3e}\n")
 
                     txtfile.write(
-                        "{:<7} {:<10} {:<10} {:<12} {:<10} {:<10} {:<12} {:<10} {:<10} {:<12} "
-                        "{:<10} {:<10} {:10}\n".format
+                        "{:<7} {:<10} {:<10} {:<12} {:<10} {:<10} {:<12} {:<10} {:<10} {:<12} \n".format
                         ("terms",
                          "Taylor",
                          "Abs Err",
@@ -144,45 +105,31 @@ def txt_write_error(term_values=None, x_0_values=None, long=False, name="error_a
                          "Rel Err",
                          "Backward",
                          "Abs Err",
-                         "Rel Err",
-                         "CheckSum",
-                         "Abs Err",
                          "Rel Err"))
                     first_term = False
 
                 txtfile.write(
                     "{:<7} {:<10.3e} {:<10.3e} {:<12.3e} {:<10.3e} {:<10.3e} {:<12.3e} {:<10.3e} {:<10.3e} "
-                    "{:<12.3e} {:<10.3e} {:<10.3e} {:<10.3e}\n".format(
+                    "{:<12.3e}\n".format(
                         terms,
                         taylor_value, taylor_value_abs_error, taylor_value_rel_error,
                         forward_sum, forward_abs_error, forward_rel_error,
-                        backward_sum, backward_abs_error, backward_rel_error,
-                        check_sum, check_abs_error, check_rel_error))
+                        backward_sum, backward_abs_error, backward_rel_error))
 
     print("Data has been written to", txt_file_path)
 
 
-def plotting_delta(x_values, function, *args, title="Plot of δ(x) - default", \
-                   logscale=False, helping_line=True, long=False, fontsize=15):
-    def delta_long(x):
-        return np.abs((np.exp(np.longdouble(x)) - function(*args, x)) / np.exp(np.longdouble(x)))
-
+def plotting_delta(x_values, function, terms=10, *arg=None, title="Plot of δ(x) - default", \
+                   logscale=False, helping_line=True, fontsize=15):
     def delta(x):
-        return np.abs(np.exp(x) - function(*args, x)) / np.exp(x)
+        return np.abs((np.exp(np.longdouble(x)) - function(terms, x)) / np.exp(np.longdouble(x)))
 
     save = title.split("-", 1)[1].strip()
 
     y_values = []
     for item in x_values:
         y_values.append(delta(item))
-    plt.plot(x_values, y_values, label='Standard Precision')
-
-    if long:
-        y_values_long = []
-        for item in x_values:
-            y_values_long.append(delta_long(item))
-        plt.plot(x_values, y_values_long, label='Extended Precision')
-        save = save + "_long"
+    plt.plot(x_values, y_values, label="relativer Fehler")
 
     if logscale:
         plt.yscale('log')
@@ -214,32 +161,30 @@ def plotting_delta(x_values, function, *args, title="Plot of δ(x) - default", \
 
 
 def main():
-    error = True
+    error = False
     if error:
-        txt_write_error(term_values=[10, 50], x_0_values=[1.0, 10.0, 20.0, -10.0, -20.0], long=False,
-                        name="error_analysis_table_normal.txt")
-        txt_write_error(term_values=[10, 50], x_0_values=[1.0, 10.0, 20.0, -10.0, -20.0], long=True,
+        txt_write_error(term_values=[10, 50], x_0_values=[1.0, 10.0, 20.0, -10.0, -20.0],
                         name="error_analysis_table_long.txt")
 
     plot = True
     if plot:
         x_values = np.linspace(0, np.log(2), 100)
-        plotting_delta(x_values, taylorExponential_back, 10, title="Plot of δ(x) - Backward Summation",
+        plotting_delta(x_values, sums_for_exp, 50, title="Plot of δ(x) - Backward Summation",
                        logscale=False, helping_line=False)
-        plotting_delta(x_values, taylor_exp, title="Plot of δ(x) - Taylor Algorithm",
+        plotting_delta(x_values, taylor_exp, 50, title="Plot of δ(x) - Taylor Algorithm",
                        logscale=False, helping_line=False)
 
         x_values = np.linspace(0, 5, 1000)
-        plotting_delta(x_values, taylorExponential_back, 10, title="Plot of δ(x) - Backward Summation",
+        plotting_delta(x_values, sums_for_exp, 50, title="Plot of δ(x) - Backward Summation",
                        logscale=False, helping_line=True)
-        plotting_delta(x_values, taylor_exp, title="Plot of δ(x) - Taylor Algorithm",
+        plotting_delta(x_values, taylor_exp, 50, title="Plot of δ(x) - Taylor Algorithm",
                        logscale=False, helping_line=True)
 
         x_values = np.linspace(0, 1, 300)
-        plotting_delta(x_values, taylorExponential_back, 10, title="Plot of δ(x) - Backward Summation",
-                       logscale=True, helping_line=False, long=True)
-        plotting_delta(x_values, taylor_exp, title="Plot of δ(x) - Taylor Algorithm",
-                       logscale=True, helping_line=False, long=True)
+        plotting_delta(x_values, sums_for_exp, 50, title="Plot of δ(x) - Backward Summation",
+                       logscale=True, helping_line=False)
+        plotting_delta(x_values, taylor_exp, 50, title="Plot of δ(x) - Taylor Algorithm",
+                       logscale=True, helping_line=False)
 
 
 if __name__ == "__main__":
