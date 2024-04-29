@@ -90,7 +90,7 @@ def txt_write_error(term_values=None, x_0_values=None, long=False, name="error_a
             for terms in term_values:
                 true_value, taylor_value, taylor_value_abs_error, taylor_value_rel_error, \
                     forward_sum, forward_abs_error, forward_rel_error, \
-                    backward_sum, backward_abs_error, backward_rel_error = allErrors(terms=terms, x_0=x_0, long=long)
+                    backward_sum, backward_abs_error, backward_rel_error = allErrors(terms=terms, x_0=x_0)
                 if first_term:
                     txtfile.write(f"True Value = {true_value:.3e}\n")
 
@@ -119,12 +119,15 @@ def txt_write_error(term_values=None, x_0_values=None, long=False, name="error_a
     print("Data has been written to", txt_file_path)
 
 
-def plotting_delta(x_values, function, terms=10, *arg=None, title="Plot of δ(x) - default", \
-                   logscale=False, helping_line=True, fontsize=15):
+def plotting_delta(x_values, function, terms=10, index=None, title="Plot of δ(x) - default", \
+                   logscale=False, helping_line=True, fontsize=20):
     def delta(x):
-        return np.abs((np.exp(np.longdouble(x)) - function(terms, x)) / np.exp(np.longdouble(x)))
+        if index:
+            return np.abs((np.exp(np.longdouble(x)) - function(terms, x)[index]) / np.exp(np.longdouble(x)))
+        else:
+            return np.abs((np.exp(np.longdouble(x)) - function(terms, x)) / np.exp(np.longdouble(x)))
 
-    save = title.split("-", 1)[1].strip()
+    save = title.split("-", 1)[1].strip() + "_terms" + str(terms)
 
     y_values = []
     for item in x_values:
@@ -150,10 +153,11 @@ def plotting_delta(x_values, function, terms=10, *arg=None, title="Plot of δ(x)
         plt.plot([], [], color='purple', linestyle='--', label="Multiples of ln(2)")
         save = save + "_helping"
 
-    plt.legend(fontsize=fontsize-5)
+    plt.legend(fontsize=fontsize - 5)
     plt.xticks(fontsize=fontsize)
     plt.yticks(fontsize=fontsize)
     plt.gca().yaxis.get_offset_text().set_fontsize(fontsize - 3)
+    plt.gca().ticklabel_format(style='sci', axis='y', scilimits=(0, 0))
 
     plt.tight_layout()
     plt.savefig(f"{save}.pdf", format="pdf", dpi=300)
@@ -161,30 +165,19 @@ def plotting_delta(x_values, function, terms=10, *arg=None, title="Plot of δ(x)
 
 
 def main():
-    error = False
+    error = True
     if error:
         txt_write_error(term_values=[10, 50], x_0_values=[1.0, 10.0, 20.0, -10.0, -20.0],
-                        name="error_analysis_table_long.txt")
+                        name="error_analysis_table.txt")
 
     plot = True
     if plot:
-        x_values = np.linspace(0, np.log(2), 100)
-        plotting_delta(x_values, sums_for_exp, 50, title="Plot of δ(x) - Backward Summation",
-                       logscale=False, helping_line=False)
-        plotting_delta(x_values, taylor_exp, 50, title="Plot of δ(x) - Taylor Algorithm",
-                       logscale=False, helping_line=False)
-
-        x_values = np.linspace(0, 5, 1000)
-        plotting_delta(x_values, sums_for_exp, 50, title="Plot of δ(x) - Backward Summation",
-                       logscale=False, helping_line=True)
-        plotting_delta(x_values, taylor_exp, 50, title="Plot of δ(x) - Taylor Algorithm",
-                       logscale=False, helping_line=True)
-
-        x_values = np.linspace(0, 1, 300)
-        plotting_delta(x_values, sums_for_exp, 50, title="Plot of δ(x) - Backward Summation",
-                       logscale=True, helping_line=False)
-        plotting_delta(x_values, taylor_exp, 50, title="Plot of δ(x) - Taylor Algorithm",
-                       logscale=True, helping_line=False)
+        for item in [10, 11, 12, 13, 14, 15, 20]:
+            x_values = np.linspace(0, 3, 1000)
+            plotting_delta(x_values, sums_for_exp, item, index=1, title="Plot of δ(x) - Backward Summation",
+                           logscale=False, helping_line=True)
+            plotting_delta(x_values, taylor_exp, item, title="Plot of δ(x) - Taylor Algorithm",
+                           logscale=False, helping_line=True)
 
 
 if __name__ == "__main__":
