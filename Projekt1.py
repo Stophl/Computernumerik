@@ -140,7 +140,7 @@ def plotting_delta(x_values, function, terms=10, index=None, title="Plot of δ(x
 
     plt.xlabel('x', fontsize=fontsize)
     plt.ylabel('δ(x)', fontsize=fontsize)
-    plt.title(title, fontsize=fontsize)
+    #plt.title(title, fontsize=fontsize)
     plt.grid(True)
 
     lower = min(x_values)
@@ -165,7 +165,7 @@ def plotting_delta(x_values, function, terms=10, index=None, title="Plot of δ(x
 
 
 def main():
-    error = True
+    error = False
     if error:
         txt_write_error(term_values=[10, 50], x_0_values=[1.0, 10.0, 20.0, -10.0, -20.0],
                         name="error_analysis_table.txt")
