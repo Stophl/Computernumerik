@@ -32,21 +32,22 @@ def sin_interval(x, terms=1):
 def reduce_sin(x, terms=1):
     if x < 0:
         return -reduce_sin(-x, terms=terms)
-    elif x <= np.pi:
+    if x <= np.pi:
         return sin_interval(x, terms=terms)
     elif x <= 2 * np.pi:
-        return sin_interval(2 * np.pi - x, terms=terms)
+        return -sin_interval(np.abs(np.pi - x), terms=terms)
     else:
         k = np.floor(x / (2 * np.pi))
         r = x - 2 * k * np.pi
         return reduce_sin(r, terms=terms)
 
 def main():
-    a = -3.2
+    a = 3.1
     sinarr = summands(x_0=a, terms=15)
     print(sum(sinarr))
     print(reduce_sin(a, 15))
     print(np.sin(a))
+    print((reduce_sin(a, 25)-np.sin(a))/np.sin(a))
 
 
 if __name__ == "__main__":
