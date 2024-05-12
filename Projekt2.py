@@ -113,8 +113,18 @@ def plot_error_interval(start, end, num_points, functions=None, terms=1, absolut
 
 
 def main():
-    plot_terms_interval(0, 7, 701, functions=[sin_standard_taylor, sin_reduction_taylor], accuracy=1e-13, limit=100)
-    plot_terms_interval(0, 7, 701, functions=[sin_standard_taylor, sin_reduction_taylor], accuracy=1e-15, limit=100)
+    plot_terms_interval(0, 7, 701, functions=[sin_standard_taylor, sin_reduction_taylor],
+                        accuracy=1e-13, limit=100)
+    plot_terms_interval(0, 7, 701, functions=[sin_standard_taylor, sin_reduction_taylor],
+                        accuracy=1e-15, limit=100)
+    plot_terms_interval(0, 7, 701, functions=[sin_standard_taylor, sin_reduction_taylor],
+                        accuracy=1e-13, limit=100, absolute=True)
+    plot_terms_interval(0, 7, 701, functions=[sin_standard_taylor, sin_reduction_taylor],
+                        accuracy=1e-15, limit=100, absolute=True)
+    plot_error_interval(0, 7, 701, functions=[sin_standard_taylor, sin_reduction_taylor],
+                        terms=25)
+    plot_error_interval(0, 7, 701, functions=[sin_standard_taylor, sin_reduction_taylor],
+                        terms=25, absolute=True)
 
 
 if __name__ == "__main__":
