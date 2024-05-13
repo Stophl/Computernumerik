@@ -88,14 +88,18 @@ def plot_terms_interval(start, end, num_points, functions=None, accuracy=1e-13, 
     return
 
 
-def plot_error_interval(start, end, num_points, functions=None, terms=1, absolute=False, log=False):
+def plot_error_interval(start, end, num_points, functions=None, terms=1, absolute=False, log=False, chebyshev=False):
     if functions is None:
         functions = [sin_reduction_taylor]
     x_arr = np.linspace(start, end, num_points)
     for func in functions:
         error_arr = []
         for x in x_arr:
-            error_arr.append(error(test=x, function=func, terms=terms, absolute=absolute))
+            if func == neville:
+                datax, datay = generate_interpolation_data(start, end, int(num_points/20), chebyshev=chebyshev)
+                error_arr.append(error_neville(test=x, datax=datax, datay=datay, absolute=absolute))
+            else:
+                error_arr.append(error(test=x, function=func, terms=terms, absolute=absolute))
         plt.plot(x_arr, error_arr, label=func.__name__)
     plt.xlabel('x')
     if absolute:
@@ -161,6 +165,52 @@ def txt_write_error(term_values=None, x_0_values=None, name="error_analysis_tabl
                         backward_sum, backward_abs_error, backward_rel_error))
 
     print("Data has been written to", txt_file_path)
+    return
+
+
+def neville(datax, datay, x):
+    n = len(datax)
+    p = n * [0]
+    for k in range(n):
+        for i in range(n - k):
+            if k == 0:
+                p[i] = datay[i]
+            else:
+                p[i] = ((x - datax[i + k]) * p[i] + (datax[i] - x) * p[i + 1]) / \
+                       (datax[i] - datax[i + k])
+    return p[0]
+
+
+def generate_interpolation_data(interval_start, interval_end, num_points, chebyshev=False):
+    if chebyshev:
+        chebyshev_nodes = [(interval_start + interval_end) / 2 +
+                           (interval_end - interval_start) / 2 *
+                           np.cos((2 * i + 1) * np.pi / (2 * num_points))
+                           for i in range(num_points)]
+        datax = np.array(chebyshev_nodes)
+        datay = np.sin(datax)
+        return datax, datay
+    else:
+        datax = np.linspace(interval_start, interval_end, num_points)
+        datay = np.sin(datax)
+        return datax, datay
+
+
+def error_neville(test=0, datax=None, datay=None, absolute=False):
+    if datax is None:
+        datax = [0]
+    if datay is None:
+        datay = [np.sin(0)]
+    true_value = np.longdouble(np.sin(test))
+    test_value = neville(datax, datay, test)
+
+    if absolute:
+        return np.abs((test_value - true_value))
+    else:
+        if true_value != 0:
+            return np.abs((test_value - true_value) / true_value)
+        else:
+            return 0
 
 
 def main():
@@ -176,11 +226,13 @@ def main():
                         terms=25)
     plot_error_interval(0, 7, 701, functions=[sin_standard_taylor, sin_reduction_taylor],
                         terms=25, absolute=True)
-    plot_error_interval(0, 7, 701, functions=[sin_standard_taylor, sin_reduction_taylor],
-                        terms=25, log=True)
+    plot_error_interval(0, 7, 701, functions=[sin_standard_taylor, sin_reduction_taylor, neville],
+                        terms=25, log=True, chebyshev=False)
     plot_error_interval(0, 7, 701, functions=[sin_standard_taylor, sin_reduction_taylor],
                         terms=25, absolute=True, log=True)
-    txt_write_error([10, 15, 20, 25, 30], [2, 4, 8, 16, 32, 64, 128])
+    txt_write_error([10, 15, 20, 25, 30], [2, 4, 8, 16, 32, 64, 128, 710])
+
+
 
 
 if __name__ == "__main__":
