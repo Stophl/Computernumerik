@@ -88,7 +88,7 @@ def plot_terms_interval(start, end, num_points, functions=None, accuracy=1e-13, 
     return
 
 
-def plot_error_interval(start, end, num_points, functions=None, terms=1, absolute=False):
+def plot_error_interval(start, end, num_points, functions=None, terms=1, absolute=False, log=False):
     if functions is None:
         functions = [sin_reduction_taylor]
     x_arr = np.linspace(start, end, num_points)
@@ -105,36 +105,25 @@ def plot_error_interval(start, end, num_points, functions=None, terms=1, absolut
 
     plt.ylabel(f'{err_type} Error')
     plt.title(f'{err_type} Error for Interval [{start}, {end}]')
-    # plt.yscale('log')
+    if log:
+        plt.yscale('log')
     plt.legend()
     plt.tight_layout()
     plt.show()
     return
 
 
-def txt_write_error(term_values=None, x_0_values=None):
+def txt_write_error(term_values=None, x_0_values=None, name="error_analysis_table.txt"):
     if term_values is None:
         term_values = [1]
     if x_0_values is None:
         x_0_values = [0]
-    txt_file_path = 'error_analysis_table.txt'
+    txt_file_path = name
 
-    with open(txt_file_path, 'w') as txtfile:
-        txtfile.write(
-            "{:<8} {:<8} {:<15} {:<15} {:<15} {:<15} {:<15} {:<15} {:<15} {:<15} {:<15} {:<15}\n".format("terms", "x_0",
-                                                                                                  "True Value",
-                                                                                                  "reduction (x)",
-                                                                                                  "Abs Err",
-                                                                                                  "Rel Err",
-                                                                                                  "Forward Sum",
-                                                                                                  "Abs Err",
-                                                                                                  "Rel Err",
-                                                                                                  "Backward Sum",
-                                                                                                  "Abs Err",
-                                                                                                  "Rel Err",
-                                                                                                  ))
-
+    with (open(txt_file_path, 'w') as txtfile):
         for x_0 in x_0_values:
+            txtfile.write("{:<15}".format(f"\nx_0 = {x_0}"))
+            first_term = True
             for terms in term_values:
                 true_value = np.longdouble(np.sin(x_0))
                 reduction = sin_reduction_taylor(x_0, terms)
@@ -146,31 +135,52 @@ def txt_write_error(term_values=None, x_0_values=None):
                 backward_sum = sin_standard_taylor(x_0, terms, reverse=False)
                 backward_rel_error = error(test=x_0, function=sin_standard_taylor, terms=terms, absolute=False)
                 backward_abs_error = error(test=x_0, function=sin_standard_taylor, terms=terms, absolute=True)
+                if first_term:
+                    txtfile.write(f"True Value = {true_value:.3e}\n")
+
+                    txtfile.write(
+                        "{:<7} {:<10} {:<10} {:<12} {:<10} {:<10} {:<12} {:<10} {:<10} {:<12} \n".format
+                        ("terms",
+                         "Taylor",
+                         "Abs Err",
+                         "Rel Err",
+                         "Forward",
+                         "Abs Err",
+                         "Rel Err",
+                         "Backward",
+                         "Abs Err",
+                         "Rel Err"))
+                    first_term = False
 
                 txtfile.write(
-                    "{:<8} {:<8} {:<15.3e} {:<15.3e} {:<15.3e} {:<15.3e} {:<15.3e} {:<15.3e} {:<15.3e} {:<15.3e} {:<15.3e} {:<15.3e}\n".format(
-                        terms, x_0, true_value, reduction, reduction_abs, reduction_abs,
-                        forward_sum, forward_abs_error, forward_rel_error, backward_sum,
-                        backward_abs_error, backward_rel_error))
+                    "{:<7} {:<10.3e} {:<10.3e} {:<12.3e} {:<10.3e} {:<10.3e} {:<12.3e} {:<10.3e} {:<10.3e} "
+                    "{:<12.3e}\n".format(
+                        terms,
+                        reduction, reduction_abs, reduction_rel,
+                        forward_sum, forward_abs_error, forward_rel_error,
+                        backward_sum, backward_abs_error, backward_rel_error))
 
     print("Data has been written to", txt_file_path)
-    return
 
 
 def main():
     plot_terms_interval(0, 7, 701, functions=[sin_standard_taylor, sin_reduction_taylor],
-                        accuracy=1e-13, limit=100)
+                        accuracy=1e-14, limit=100)
     plot_terms_interval(0, 7, 701, functions=[sin_standard_taylor, sin_reduction_taylor],
-                        accuracy=1e-15, limit=100)
+                        accuracy=1e-17, limit=100)
     plot_terms_interval(0, 7, 701, functions=[sin_standard_taylor, sin_reduction_taylor],
-                        accuracy=1e-13, limit=100, absolute=True)
+                        accuracy=1e-14, limit=100, absolute=True)
     plot_terms_interval(0, 7, 701, functions=[sin_standard_taylor, sin_reduction_taylor],
-                        accuracy=1e-15, limit=100, absolute=True)
+                        accuracy=1e-17, limit=100, absolute=True)
     plot_error_interval(0, 7, 701, functions=[sin_standard_taylor, sin_reduction_taylor],
                         terms=25)
     plot_error_interval(0, 7, 701, functions=[sin_standard_taylor, sin_reduction_taylor],
                         terms=25, absolute=True)
-    txt_write_error([10,15,20,25,30], [2,4,8,16,32,64,128])
+    plot_error_interval(0, 7, 701, functions=[sin_standard_taylor, sin_reduction_taylor],
+                        terms=25, log=True)
+    plot_error_interval(0, 7, 701, functions=[sin_standard_taylor, sin_reduction_taylor],
+                        terms=25, absolute=True, log=True)
+    txt_write_error([10, 15, 20, 25, 30], [2, 4, 8, 16, 32, 64, 128])
 
 
 if __name__ == "__main__":
