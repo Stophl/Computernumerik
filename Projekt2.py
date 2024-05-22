@@ -156,14 +156,14 @@ def txt_write_error(term_values=None, x_0_values=None, name="error_analysis_tabl
                 forward_sum = sin_standard_taylor(x_0, terms, reverse=False)
                 forward_rel_error = error(False, test=x_0, function=sin_standard_taylor, terms=terms, absolute=False)
                 forward_abs_error = error(False, test=x_0, function=sin_standard_taylor, terms=terms, absolute=True)
-                backward_sum = sin_standard_taylor(x_0, terms, reverse=False)
+                backward_sum = sin_standard_taylor(x_0, terms)
                 backward_rel_error = error(test=x_0, function=sin_standard_taylor, terms=terms, absolute=False)
                 backward_abs_error = error(test=x_0, function=sin_standard_taylor, terms=terms, absolute=True)
                 if first_term:
                     txtfile.write(f"True Value = {true_value:.3e}\n")
 
                     txtfile.write(
-                        "{:<7} {:<10} {:<10} {:<12} {:<10} {:<10} {:<12} {:<10} {:<10} {:<12} {:<10} {:<10} {:<12} \n".format
+                        "{:<7} {:<10} {:<10} {:<12} {:<10} {:<10} {:<12} {:<10} {:<10} {:<12} {:<10} {:<10} {:<12} {:<12}\n".format
                         ("terms",
                          "Taylor",
                          "Abs Err",
@@ -176,17 +176,19 @@ def txt_write_error(term_values=None, x_0_values=None, name="error_analysis_tabl
                          "Rel Err",
                          "Backward",
                          "Abs Err",
-                         "Rel Err"))
+                         "Rel Err",
+                         "F-B"))
                     first_term = False
 
                 txtfile.write(
                     "{:<7} {:<10.3e} {:<10.3e} {:<12.3e} {:<10.3e} {:<10.3e} {:<12.3e} {:<10.3e} {:<10.3e} {:<12.3e} {:<10.3e} {:<10.3e} "
-                    "{:<12.3e}\n".format(
+                    "{:<12.3e} {:<12.3e}\n".format(
                         terms,
                         reduction, reduction_abs, reduction_rel,
                         reduction_high, reduction_abs_high, reduction_rel_high,
                         forward_sum, forward_abs_error, forward_rel_error,
-                        backward_sum, backward_abs_error, backward_rel_error))
+                        backward_sum, backward_abs_error, backward_rel_error,
+                        forward_sum-backward_sum))
 
     print("Data has been written to", txt_file_path)
     return
