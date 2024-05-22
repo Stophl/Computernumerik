@@ -1,5 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
+from decimal import Decimal, getcontext
 
 
 def summands(x_0=0.0, terms=1):
@@ -35,7 +36,7 @@ def sin_standard_taylor(x, terms=1, reverse=True):
     return result
 
 
-def sin_reduction_taylor(x, terms=1):
+def sin_reduction_taylor(x, terms=1, high_precision=False):
     if x < 0:
         return -sin_reduction_taylor(-x, terms=terms)
     if x <= np.pi:
@@ -43,14 +44,22 @@ def sin_reduction_taylor(x, terms=1):
     elif x <= 2 * np.pi:
         return -sin_standard_taylor(np.abs(np.pi - x), terms=terms)
     else:
-        k = np.floor(x / (2 * np.pi))
-        r = x - 2 * k * np.pi
-        return sin_reduction_taylor(r, terms=terms)
+        if high_precision:
+            getcontext().prec = 100
+            x_decimal = Decimal(x)
+            pi = Decimal(np.pi)
+            k = Decimal(np.floor(x / (2 * np.pi)))
+            r = x_decimal - Decimal(2 * k * pi)
+            return sin_reduction_taylor(float(r), terms=terms)
+        else:
+            k = np.floor(x / (2 * np.pi))
+            r = x - 2 * k * np.pi
+            return sin_reduction_taylor(r, terms=terms)
 
 
-def error(*reverse, test=0.0, function=sin_reduction_taylor, terms=1, absolute=False):
+def error(*reverse_high, test=0.0, function=sin_reduction_taylor, terms=1, absolute=False):
     true_value = np.longdouble(np.sin(test))
-    test_value = function(test, terms, *reverse)
+    test_value = function(test, terms, *reverse_high)
     if absolute:
         return np.abs((test_value - true_value))
     else:
@@ -88,33 +97,41 @@ def plot_terms_interval(start, end, num_points, functions=None, accuracy=1e-13, 
     return
 
 
-def plot_error_interval(start, end, num_points, functions=None, terms=1, absolute=False, log=False, chebyshev=False):
+def plot_error_interval(start, end, num_points, functions=None, terms=1, absolute=False, log=False,
+                        chebyshev=False, both_knots=False, every_ith=20):
     if functions is None:
         functions = [sin_reduction_taylor]
-    x_arr = np.linspace(start, end, num_points)
-    for func in functions:
-        error_arr = []
-        for x in x_arr:
-            if func == neville:
-                datax, datay = generate_interpolation_data(start, end, int(num_points/20), chebyshev=chebyshev)
-                error_arr.append(error_neville(test=x, datax=datax, datay=datay, absolute=absolute))
-            else:
-                error_arr.append(error(test=x, function=func, terms=terms, absolute=absolute))
-        plt.plot(x_arr, error_arr, label=func.__name__)
-    plt.xlabel('x')
-    if absolute:
-        err_type = "absolute"
-    else:
-        err_type = "relative"
 
+    x_arr = np.linspace(start, end, num_points)
+
+    for func in functions:
+        if func == neville:
+            looper = [True, False] if both_knots else [chebyshev]
+
+            for item in looper:
+                error_arr = []
+                for x in x_arr:
+                    datax, datay = generate_interpolation_data(start, end, int(num_points / every_ith+1), chebyshev=item)
+                    error_arr.append(error_neville(test=x, datax=datax, datay=datay, absolute=absolute))
+                label = f'{func.__name__} ({"Chebyshev" if item else "Equidistant"})'
+                plt.plot(x_arr, error_arr, label=label)
+        else:
+            error_arr = []
+            for x in x_arr:
+                error_arr.append(error(test=x, function=func, terms=terms, absolute=absolute))
+            plt.plot(x_arr, error_arr, label=func.__name__)
+
+    plt.xlabel('x')
+    err_type = "absolute" if absolute else "relative"
     plt.ylabel(f'{err_type} Error')
     plt.title(f'{err_type} Error for Interval [{start}, {end}]')
+
     if log:
         plt.yscale('log')
+
     plt.legend()
     plt.tight_layout()
     plt.show()
-    return
 
 
 def txt_write_error(term_values=None, x_0_values=None, name="error_analysis_table.txt"):
@@ -133,6 +150,9 @@ def txt_write_error(term_values=None, x_0_values=None, name="error_analysis_tabl
                 reduction = sin_reduction_taylor(x_0, terms)
                 reduction_rel = error(test=x_0, function=sin_reduction_taylor, terms=terms)
                 reduction_abs = error(test=x_0, function=sin_reduction_taylor, terms=terms, absolute=True)
+                reduction_high = sin_reduction_taylor(x_0, terms, high_precision=True)
+                reduction_rel_high = error(True, test=x_0, function=sin_reduction_taylor, terms=terms)
+                reduction_abs_high = error(True, test=x_0, function=sin_reduction_taylor, terms=terms, absolute=True)
                 forward_sum = sin_standard_taylor(x_0, terms, reverse=False)
                 forward_rel_error = error(False, test=x_0, function=sin_standard_taylor, terms=terms, absolute=False)
                 forward_abs_error = error(False, test=x_0, function=sin_standard_taylor, terms=terms, absolute=True)
@@ -143,9 +163,12 @@ def txt_write_error(term_values=None, x_0_values=None, name="error_analysis_tabl
                     txtfile.write(f"True Value = {true_value:.3e}\n")
 
                     txtfile.write(
-                        "{:<7} {:<10} {:<10} {:<12} {:<10} {:<10} {:<12} {:<10} {:<10} {:<12} \n".format
+                        "{:<7} {:<10} {:<10} {:<12} {:<10} {:<10} {:<12} {:<10} {:<10} {:<12} {:<10} {:<10} {:<12} \n".format
                         ("terms",
                          "Taylor",
+                         "Abs Err",
+                         "Rel Err",
+                         "Tay-High",
                          "Abs Err",
                          "Rel Err",
                          "Forward",
@@ -157,10 +180,11 @@ def txt_write_error(term_values=None, x_0_values=None, name="error_analysis_tabl
                     first_term = False
 
                 txtfile.write(
-                    "{:<7} {:<10.3e} {:<10.3e} {:<12.3e} {:<10.3e} {:<10.3e} {:<12.3e} {:<10.3e} {:<10.3e} "
+                    "{:<7} {:<10.3e} {:<10.3e} {:<12.3e} {:<10.3e} {:<10.3e} {:<12.3e} {:<10.3e} {:<10.3e} {:<12.3e} {:<10.3e} {:<10.3e} "
                     "{:<12.3e}\n".format(
                         terms,
                         reduction, reduction_abs, reduction_rel,
+                        reduction_high, reduction_abs_high, reduction_rel_high,
                         forward_sum, forward_abs_error, forward_rel_error,
                         backward_sum, backward_abs_error, backward_rel_error))
 
@@ -217,20 +241,20 @@ def main():
     plot_terms_interval(0, 7, 701, functions=[sin_standard_taylor, sin_reduction_taylor],
                         accuracy=1e-14, limit=100)
     plot_terms_interval(0, 7, 701, functions=[sin_standard_taylor, sin_reduction_taylor],
-                        accuracy=1e-17, limit=100)
-    plot_terms_interval(0, 7, 701, functions=[sin_standard_taylor, sin_reduction_taylor],
                         accuracy=1e-14, limit=100, absolute=True)
-    plot_terms_interval(0, 7, 701, functions=[sin_standard_taylor, sin_reduction_taylor],
-                        accuracy=1e-17, limit=100, absolute=True)
-    plot_error_interval(0, 7, 701, functions=[sin_standard_taylor, sin_reduction_taylor],
+    plot_error_interval(0, 4, 401, functions=[sin_standard_taylor, sin_reduction_taylor],
                         terms=25)
-    plot_error_interval(0, 7, 701, functions=[sin_standard_taylor, sin_reduction_taylor],
+    plot_error_interval(0, 4, 401, functions=[sin_standard_taylor, sin_reduction_taylor],
                         terms=25, absolute=True)
-    plot_error_interval(0, 7, 701, functions=[sin_standard_taylor, sin_reduction_taylor, neville],
-                        terms=25, log=True, chebyshev=False)
-    plot_error_interval(0, 7, 701, functions=[sin_standard_taylor, sin_reduction_taylor],
-                        terms=25, absolute=True, log=True)
+    #rule of thumb: spanwidth/int(numpoints/every_ith) ~ 0.25 for lagrange to be rel <100eps, stimmt zumindest von 0-4
+    plot_error_interval(0, 4, 401, functions=[sin_standard_taylor, sin_reduction_taylor, neville],
+                        terms=25, log=True, both_knots=True, every_ith=24)
+    plot_error_interval(0, 4, 401, functions=[sin_standard_taylor, sin_reduction_taylor, neville],
+                        terms=25, absolute=True, log=True, both_knots=True, every_ith=24)
     txt_write_error([10, 15, 20, 25, 30], [2, 4, 8, 16, 32, 64, 128, 710])
+
+    print(error(test=710, function=sin_reduction_taylor, terms=25))
+    print(error(True, test=710, function=sin_reduction_taylor, terms=25))
 
 
 
