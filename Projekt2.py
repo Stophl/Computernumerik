@@ -5,7 +5,7 @@ from decimal import Decimal, getcontext
 
 def summands(x_0=0.0, terms=1):
     summands = [x_0]
-    for n in range(1, terms + 1):
+    for n in range(1, 2*terms + 1):
         if n % 2 == 0 or n < 2:
             continue
         factor = -(x_0 * x_0) / (n * (n - 1))
@@ -238,8 +238,8 @@ def error_neville(test=0, datax=None, datay=None, absolute=False):
 
 def main():
     accuracy = 100 * np.finfo(np.double).eps
-    terms=25
-    stuetz=18
+    terms=12
+    stuetz=17
     plot_terms_interval(0, 7, 701, functions=[sin_standard_taylor, sin_reduction_taylor],
                         accuracy=accuracy, limit=100)
     plot_terms_interval(0, 7, 701, functions=[sin_standard_taylor, sin_reduction_taylor],
@@ -252,6 +252,8 @@ def main():
                         terms=terms, log=True, both_knots=True, stuetz=stuetz)
     plot_error_interval(0, 4, 201, functions=[sin_standard_taylor, sin_reduction_taylor, neville],
                         terms=terms, absolute=True, log=True, both_knots=True, stuetz=stuetz)
+    plot_error_interval(707, 711, 401, functions=[sin_reduction_taylor, neville],
+                        terms=terms, log=True, both_knots=True, stuetz=stuetz)
     txt_write_error([10, 15, 20, 25, 30, 35, 40], [0.125, 0.25, 0.5, 1, 2, 4, 8, 16, 32, 64, 128, 710])
 
 
