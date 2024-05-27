@@ -5,7 +5,7 @@ from decimal import Decimal, getcontext
 
 def summands(x_0=0.0, terms=1):
     summands = [x_0]
-    for n in range(1, 2*terms + 1):
+    for n in range(1, 2 * terms + 1):
         if n % 2 == 0 or n < 2:
             continue
         factor = -(x_0 * x_0) / (n * (n - 1))
@@ -37,7 +37,7 @@ def sin_reduction_taylor(x, terms=1, high_precision=False):
         return -sin_standard_taylor(np.abs(np.pi - x), terms=terms)
     else:
         if high_precision:
-            getcontext().prec = 100
+            getcontext().prec = 32
             x_decimal = Decimal(x)
             pi = Decimal(np.pi)
             k = Decimal(np.floor(x / (2 * np.pi)))
@@ -65,70 +65,6 @@ def terms_needed(test=0.0, function=sin_reduction_taylor, terms=1, accuracy=1e-1
     while error(test=test, function=function, terms=terms, absolute=absolute) > accuracy and terms < limit:
         terms += 1
     return terms
-
-
-def plot_terms_interval(start, end, num_points, functions=None, accuracy=1e-13, limit=500, absolute=False):
-    if functions is None:
-        functions = [sin_reduction_taylor]
-    x_arr = np.linspace(start, end, num_points)
-    for func in functions:
-        term_arr = []
-        for x in x_arr:
-            term_arr.append(terms_needed(test=x, function=func, accuracy=accuracy, limit=limit, absolute=absolute))
-        plt.plot(x_arr, term_arr, label=func.__name__)
-    plt.xlabel('x')
-    if absolute:
-        err_type = "absolute"
-    else:
-        err_type = "relative"
-    plt.ylabel('Terms')
-    plt.title(f'Terms needed to have {accuracy:.2e} accuracy in {err_type} error \n Interval [{start}, {end}]')
-    plt.legend()
-    plt.tight_layout()
-    plt.show()
-    return
-
-
-def plot_error_interval(start, end, num_points, functions=None, terms=1, absolute=False, log=False,
-                        chebyshev=False, both_knots=False, stuetz=50):
-    if functions is None:
-        functions = [sin_reduction_taylor]
-
-    x_arr = np.linspace(start, end, num_points)
-
-    for func in functions:
-        if func == neville:
-            looper = [False, True] if both_knots else [chebyshev]
-
-            for item in looper:
-                error_arr = []
-                for x in x_arr:
-                    datax, datay = generate_interpolation_data(start, end, stuetz, chebyshev=item)
-                    error_arr.append(error_neville(test=x, datax=datax, datay=datay, absolute=absolute))
-                label = f'{func.__name__} ({"Chebyshev" if item else "Equidistant"})'
-                plt.plot(x_arr, error_arr, label=label)
-        else:
-            error_arr = []
-            for x in x_arr:
-                error_arr.append(error(test=x, function=func, terms=terms, absolute=absolute))
-            plt.plot(x_arr, error_arr, label=func.__name__)
-
-    plt.xlabel('x')
-    err_type = "absolute" if absolute else "relative"
-    plt.ylabel(f'{err_type} Error')
-    plt.title(f'{err_type} Error for Interval [{start}, {end}]')
-
-    if log:
-        plt.yscale('log')
-
-    machine_precision = np.finfo(float).eps
-    horizontal_line_value = 100 * machine_precision
-    plt.axhline(y=horizontal_line_value, color='r', linestyle='--',
-                label=f'100eps ({horizontal_line_value:.2e})')
-
-    plt.legend()
-    plt.tight_layout()
-    plt.show()
 
 
 def txt_write_error(term_values=None, x_0_values=None, name="error_analysis_table.txt"):
@@ -236,10 +172,103 @@ def error_neville(test=0, datax=None, datay=None, absolute=False):
             return 0
 
 
+def plot_terms_interval(start, end, num_points, functions=None, accuracy=1e-13, limit=500, absolute=False):
+    if functions is None:
+        functions = [sin_reduction_taylor]
+    x_arr = np.linspace(start, end, num_points)
+    for func in functions:
+        term_arr = []
+        for x in x_arr:
+            term_arr.append(terms_needed(test=x, function=func, accuracy=accuracy, limit=limit, absolute=absolute))
+        plt.plot(x_arr, term_arr, label=func.__name__)
+    plt.xlabel('x')
+    if absolute:
+        err_type = "absolute"
+    else:
+        err_type = "relative"
+    plt.ylabel('Terms')
+    plt.title(f'Terms needed to have {accuracy:.2e} accuracy in {err_type} error \n Interval [{start}, {end}]')
+    plt.legend()
+    plt.tight_layout()
+    plt.show()
+    return
+
+
+def plot_error_interval(start, end, num_points, functions=None, terms=1, absolute=False, log=False,
+                        chebyshev=False, both_knots=False, stuetz=50):
+    if functions is None:
+        functions = [sin_reduction_taylor]
+
+    x_arr = np.linspace(start, end, num_points)
+
+    for func in functions:
+        if func == neville:
+            looper = [False, True] if both_knots else [chebyshev]
+
+            for item in looper:
+                error_arr = []
+                for x in x_arr:
+                    datax, datay = generate_interpolation_data(start, end, stuetz, chebyshev=item)
+                    error_arr.append(error_neville(test=x, datax=datax, datay=datay, absolute=absolute))
+                label = f'{func.__name__} ({"Chebyshev" if item else "Equidistant"})'
+                plt.plot(x_arr, error_arr, label=label)
+        else:
+            error_arr = []
+            for x in x_arr:
+                error_arr.append(error(test=x, function=func, terms=terms, absolute=absolute))
+            plt.plot(x_arr, error_arr, label=func.__name__)
+
+    plt.xlabel('x')
+    err_type = "absolute" if absolute else "relative"
+    plt.ylabel(f'{err_type} Error')
+    plt.title(f'{err_type} Error for Interval [{start}, {end}]')
+
+    if log:
+        plt.yscale('log')
+
+    machine_precision = np.finfo(float).eps
+    horizontal_line_value = 100 * machine_precision
+    plt.axhline(y=horizontal_line_value, color='r', linestyle='--',
+                label=f'100eps ({horizontal_line_value:.2e})')
+
+    plt.legend()
+    plt.tight_layout()
+    plt.show()
+
+
+def plot_error_terms(xs, functions=None, max_terms=30, absolute=False):
+    if functions is None:
+        functions = [sin_reduction_taylor]
+
+    if not isinstance(xs, (list, np.ndarray)):
+        xs = [xs]
+
+    terms = np.arange(1, max_terms + 1)
+
+    for func in functions:
+        for x in xs:
+            errors = []
+            for term in terms:
+                err = error(test=x, function=func, terms=term, absolute=absolute)
+                errors.append(err)
+            plt.plot(terms, errors, label=f'{func.__name__} at x={x}')
+
+    plt.xlabel('Number of Terms')
+    err_type = "Absolute" if absolute else "Relative"
+    plt.ylabel(f'{err_type} Error')
+    plt.title(f'{err_type} Error vs. Number of Terms')
+    plt.yscale('log')
+    plt.axhline(y=100 * np.finfo(float).eps, color='r', linestyle='--',
+                label=f'100eps ({100 * np.finfo(float).eps:.2e})')
+    plt.legend()
+    plt.tight_layout()
+    plt.show()
+
+
 def main():
     accuracy = 100 * np.finfo(np.double).eps
-    terms=12
-    stuetz=17
+    terms = 13
+    stuetz = 17
     plot_terms_interval(0, 7, 701, functions=[sin_standard_taylor, sin_reduction_taylor],
                         accuracy=accuracy, limit=100)
     plot_terms_interval(0, 7, 701, functions=[sin_standard_taylor, sin_reduction_taylor],
@@ -254,7 +283,11 @@ def main():
                         terms=terms, absolute=True, log=True, both_knots=True, stuetz=stuetz)
     plot_error_interval(707, 711, 401, functions=[sin_reduction_taylor, neville],
                         terms=terms, log=True, both_knots=True, stuetz=stuetz)
-    txt_write_error([10, 15, 20, 25, 30, 35, 40], [0.125, 0.25, 0.5, 1, 2, 4, 8, 16, 32, 64, 128, 710])
+    plot_error_terms([2, 4, 8, 16, 32, 64, 128, 710],max_terms=50)
+    plot_error_terms([2, 4, 8, 16, 32, 64, 128], functions=[sin_standard_taylor], max_terms=50)
+
+
+    txt_write_error([2, 4, 6, 8, 10, 12, 13, 14, 15, 20, 25, 30], [0.125, 0.25, 0.5, 1, 2, 4, 8, 16, 32, 64, 128, 710])
 
 
 if __name__ == "__main__":
