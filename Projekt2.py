@@ -37,10 +37,10 @@ def sin_reduction_taylor(x, terms=1, high_precision=False):
         return -sin_standard_taylor(np.abs(np.pi - x), terms=terms)
     else:
         if high_precision:
-            getcontext().prec = 32
+            getcontext().prec = 24
             x_decimal = Decimal(x)
-            pi = Decimal(np.pi)
-            k = Decimal(np.floor(x / (2 * np.pi)))
+            pi = Decimal("3.14159265358979323846264338327950")
+            k = Decimal(np.floor(x_decimal / (2 * pi)))
             r = x_decimal - Decimal(2 * k * pi)
             return sin_reduction_taylor(float(r), terms=terms)
         else:
@@ -195,7 +195,7 @@ def plot_terms_interval(start, end, num_points, functions=None, accuracy=1e-13, 
 
 
 def plot_error_interval(start, end, num_points, functions=None, terms=1, absolute=False, log=False,
-                        chebyshev=False, both_knots=False, stuetz=50):
+                        chebyshev=False, both_knots=False, stuetz=50, reverse_high=False):
     if functions is None:
         functions = [sin_reduction_taylor]
 
@@ -215,7 +215,7 @@ def plot_error_interval(start, end, num_points, functions=None, terms=1, absolut
         else:
             error_arr = []
             for x in x_arr:
-                error_arr.append(error(test=x, function=func, terms=terms, absolute=absolute))
+                error_arr.append(error(reverse_high, test=x, function=func, terms=terms, absolute=absolute))
             plt.plot(x_arr, error_arr, label=func.__name__)
 
     plt.xlabel('x')
@@ -236,20 +236,17 @@ def plot_error_interval(start, end, num_points, functions=None, terms=1, absolut
     plt.show()
 
 
-def plot_error_terms(xs, functions=None, max_terms=30, absolute=False):
+def plot_error_terms(x_values=[2], functions=None, max_terms=30, absolute=False, high=False):
     if functions is None:
         functions = [sin_reduction_taylor]
-
-    if not isinstance(xs, (list, np.ndarray)):
-        xs = [xs]
 
     terms = np.arange(1, max_terms + 1)
 
     for func in functions:
-        for x in xs:
+        for x in x_values:
             errors = []
             for term in terms:
-                err = error(test=x, function=func, terms=term, absolute=absolute)
+                err = error(high, test=x, function=func, terms=term, absolute=absolute)
                 errors.append(err)
             plt.plot(terms, errors, label=f'{func.__name__} at x={x}')
 
@@ -283,11 +280,13 @@ def main():
                         terms=terms, absolute=True, log=True, both_knots=True, stuetz=stuetz)
     plot_error_interval(707, 711, 401, functions=[sin_reduction_taylor, neville],
                         terms=terms, log=True, both_knots=True, stuetz=stuetz)
-    plot_error_terms([2, 4, 8, 16, 32, 64, 128, 710],max_terms=50)
-    plot_error_terms([2, 4, 8, 16, 32, 64, 128], functions=[sin_standard_taylor], max_terms=50)
+    plot_error_interval(707, 711, 401, functions=[sin_reduction_taylor, neville],
+                        terms=terms, log=True, both_knots=True, stuetz=stuetz, reverse_high=True)
+    plot_error_terms(x_values=[2, 4, 8, 16, 32, 64, 128, 710], max_terms=50, high=False)
+    plot_error_terms(x_values=[2, 4, 8, 16, 32, 64, 128, 710], max_terms=50, high=True)
+    plot_error_terms(x_values=[2, 4, 8, 16, 32, 64, 128], functions=[sin_standard_taylor], max_terms=50)
 
-
-    txt_write_error([2, 4, 6, 8, 10, 12, 13, 14, 15, 20, 25, 30], [0.125, 0.25, 0.5, 1, 2, 4, 8, 16, 32, 64, 128, 710])
+    txt_write_error([2, 4, 6, 8, 10, 12, 13, 14, 15, 20, 25, 30], [2, 4, 8, 16, 32, 64, 128, 710])
 
 
 if __name__ == "__main__":
